@@ -3,6 +3,7 @@ const { defineSecret } = require('firebase-functions/params');
 const logger = require('firebase-functions/logger');
 require('dotenv').config();
 const sharp = require('sharp');
+const pdf = require('pdf-parse')
 
 const OPENAI_API_KEY = defineSecret('OPENAI_API_KEY');
 
@@ -26,7 +27,6 @@ exports.convertPdfToSlides = onRequest({ region: 'us-central1', cors: false, sec
       return res.status(400).json({ error: 'pdfBase64 is required' });
     }
 
-    const { default: pdf } = await import('pdf-parse');
     const pdfBuffer = Buffer.from(pdfBase64, 'base64');
     const parsed = await pdf(pdfBuffer);
     const textRaw = (parsed && parsed.text) ? parsed.text : '';
