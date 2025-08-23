@@ -79,7 +79,7 @@ exports.convertPdfToSlides = onRequest({ region: 'us-central1', cors: false, sec
           items: {
             type: 'object',
             additionalProperties: false,
-            required: ['title', 'bullets'],
+            required: ['title', 'bullets', 'image_svg'],
             properties: {
               title: { type: 'string', minLength: 1, maxLength: 120 },
               bullets: {
