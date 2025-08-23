@@ -46,8 +46,7 @@ jobs:
       - name: Deploy Firebase Functions using service account
         env:
           GOOGLE_APPLICATION_CREDENTIALS: $HOME/service-account.json
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
           cd firebase
-          # Ensure cleanup policy is configured to avoid post-deploy nonzero exit
-          firebase functions:artifacts:setpolicy --project ${{ secrets.FIREBASE_PROJECT_ID }} --location us-central1 --policy auto --quiet || true
-          firebase deploy --only functions --project ${{ secrets.FIREBASE_PROJECT_ID }}
+          firebase deploy --only functions --project ${{ secrets.FIREBASE_PROJECT_ID }} --token "$FIREBASE_TOKEN" --force
