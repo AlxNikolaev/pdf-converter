@@ -3,7 +3,6 @@ const { defineSecret } = require('firebase-functions/params');
 const logger = require('firebase-functions/logger');
 require('dotenv').config();
 const sharp = require('sharp');
-const pdf = require('pdf-parse')
 
 const OPENAI_API_KEY = defineSecret('OPENAI_API_KEY');
 
@@ -28,8 +27,21 @@ exports.convertPdfToSlides = onRequest({ region: 'us-central1', cors: false, sec
     }
 
     const pdfBuffer = Buffer.from(pdfBase64, 'base64');
-    const parsed = await pdf(pdfBuffer);
-    const textRaw = (parsed && parsed.text) ? parsed.text : '';
+    async function extractTextFromPdf(buffer) {
+      const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+      const loadingTask = pdfjs.getDocument({ data: new Uint8Array(buffer) });
+      const doc = await loadingTask.promise;
+      let all = '';
+      const maxPages = Math.min(doc.numPages, 30);
+      for (let i = 1; i <= maxPages; i++) {
+        const page = await doc.getPage(i);
+        const content = await page.getTextContent();
+        const text = content.items.map((it) => it.str).join(' ');
+        all += text + '\n';
+      }
+      return all;
+    }
+    const textRaw = await extractTextFromPdf(pdfBuffer);
     const text = (textRaw || '').replace(/\s+/g, ' ').trim().slice(0, 24000);
 
     const system = `You are an assistant that converts document text into a clear set of presentation slides.
@@ -61,7 +73,7 @@ exports.convertPdfToSlides = onRequest({ region: 'us-central1', cors: false, sec
         { role: 'system', content: system },
         { role: 'user', content: user }
       ],
-      response_format: { type: 'json_object' }
+      text: { format: 'json' }
     });
 
     const jsonText = response.output_text || (response.output && response.output[0] && response.output[0].content[0].text) || '';
