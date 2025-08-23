@@ -1,0 +1,27 @@
+{
+  "timeZone": "Etc/UTC",
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "addOns": {
+    "common": {
+      "name": "PDF → Slides by Your Name",
+      "logoUrl": "https://www.gstatic.com/images/branding/product/2x/slides_96dp.png",
+      "layoutProperties": {
+        "primaryColor": "#4285F4",
+        "secondaryColor": "#185ABC"
+      },
+      "homepageTrigger": {
+        "enabled": false
+      }
+    },
+    "slides": {}
+  },
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/script.container.ui",
+    "https://www.googleapis.com/auth/script.external_request",
+    "https://www.googleapis.com/auth/presentations",
+    "https://www.googleapis.com/auth/drive"
+  ]
+}
+
+

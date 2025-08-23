@@ -1,0 +1,12 @@
+{
+  "scriptId": "1rQPwGhXzbZNWXBT3-nW54ekMN0NmU9sRQsjj4Cz-hlWGswB7tlzx3PI0",
+  "rootDir": "apps-script",
+  "projectId": "",
+  "filePushOrder": [
+    "appsscript.json",
+    "Code.gs",
+    "ui/index.html"
+  ]
+}
+
+
