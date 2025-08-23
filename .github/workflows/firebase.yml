@@ -46,6 +46,7 @@ jobs:
       - name: Deploy Firebase Functions using service account
         env:
           GOOGLE_APPLICATION_CREDENTIALS: $HOME/service-account.json
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
           cd firebase
-          firebase deploy --only functions --project ${{ secrets.FIREBASE_PROJECT_ID }}
+          firebase deploy --only functions --project ${{ secrets.FIREBASE_PROJECT_ID }} --token "$FIREBASE_TOKEN"
