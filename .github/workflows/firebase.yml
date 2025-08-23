@@ -22,9 +22,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Setup clasp configuration
+      - name: Setup Google Service Account
         run: |
-          echo '${{ secrets.CLASP_JSON }}' > ~/.clasprc.json
+          echo '${{ secrets.GOOGLE_SERVICE_ACCOUNT }}' > $HOME/service-account.json
+          export GOOGLE_APPLICATION_CREDENTIALS="$HOME/service-account.json"
+
+      - name: Login to clasp with service account
+        run: |
+          npx clasp login --creds $HOME/service-account.json
 
       - name: Deploy to Apps Script
         run: npm run clasp:deploy
