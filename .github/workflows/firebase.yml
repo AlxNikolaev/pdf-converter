@@ -25,15 +25,15 @@ jobs:
       - name: Setup Google Service Account
         run: |
           echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > $HOME/service-account.json
-          export GOOGLE_APPLICATION_CREDENTIALS="$HOME/service-account.json"
 
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
-      - name: Authenticate Firebase with service account
+      - name: Authenticate with Firebase using service account
         env:
           GOOGLE_APPLICATION_CREDENTIALS: $HOME/service-account.json
         run: |
+          firebase login --service-account $HOME/service-account.json
           firebase use ${{ secrets.FIREBASE_PROJECT_ID }}
 
       - name: Login to clasp with service account
