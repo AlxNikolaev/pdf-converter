@@ -20,14 +20,22 @@ function showSidebar() {
  * Creates slides in the active presentation from a slideSpec array.
  * slideSpec: Array<{ title: string, bullets: string[], imagePngBase64?: string }>
  */
-function createSlides(slideSpec) {
-  if (!slideSpec || !slideSpec.length) return 'No slides to create';
+function createSlides(payload) {
+  var slidesInput = [];
+  var pageImages = null;
+  if (Array.isArray(payload)) {
+    slidesInput = payload;
+  } else if (payload && Array.isArray(payload.slides)) {
+    slidesInput = payload.slides;
+    if (payload.pageImages && Array.isArray(payload.pageImages)) pageImages = payload.pageImages;
+  }
+  if (!slidesInput || !slidesInput.length) return 'No slides to create';
   var presentation = SlidesApp.getActivePresentation();
   var pageWidth = presentation.getPageWidth ? presentation.getPageWidth() : 960;
   var pageHeight = presentation.getPageHeight ? presentation.getPageHeight() : 540;
   var margin = 24;
-  for (var i = 0; i < slideSpec.length; i++) {
-    var spec = slideSpec[i];
+  for (var i = 0; i < slidesInput.length; i++) {
+    var spec = slidesInput[i];
     var slide = presentation.appendSlide(SlidesApp.PredefinedLayout.TITLE_AND_BODY);
     var pageElements = slide.getPageElements();
     var titleShape = slide.getPlaceholder(SlidesApp.PlaceholderType.TITLE);
@@ -39,7 +47,13 @@ function createSlides(slideSpec) {
       textRange.setText(spec.bullets.join('\n'));
       bodyShape.asShape().getText().getListStyle().applyListPreset(SlidesApp.ListPreset.DISC_CIRCLE_SQUARE);
     }
-    if (spec.imagePngBase64) {
+    var imageBase64 = null;
+    if (pageImages && pageImages[i]) {
+      imageBase64 = pageImages[i];
+    } else if (spec.imagePngBase64) {
+      imageBase64 = spec.imagePngBase64;
+    }
+    if (imageBase64) {
       if (bodyShape) {
         try {
           var body = bodyShape.asShape();
@@ -48,7 +62,7 @@ function createSlides(slideSpec) {
         } catch (e) {}
       }
 
-      var blob = Utilities.newBlob(Utilities.base64Decode(spec.imagePngBase64), 'image/png', 'image.png');
+      var blob = Utilities.newBlob(Utilities.base64Decode(imageBase64), 'image/png', 'image.png');
       var image = slide.insertImage(blob);
       var maxImgWidth = Math.max(200, (pageWidth * 0.4) - (2 * margin));
       var maxImgHeight = Math.max(200, (pageHeight * 0.6));
@@ -64,7 +78,20 @@ function createSlides(slideSpec) {
       image.setLeft(imgLeft).setTop(imgTop);
     }
   }
-  return 'Slides created: ' + slideSpec.length;
+  if (pageImages && pageImages.length > slidesInput.length) {
+    for (var p = slidesInput.length; p < pageImages.length; p++) {
+      var b64 = pageImages[p];
+      if (!b64) continue;
+      var s = presentation.appendSlide(SlidesApp.PredefinedLayout.BLANK);
+      var blob2 = Utilities.newBlob(Utilities.base64Decode(b64), 'image/png', 'page-image.png');
+      var img = s.insertImage(blob2);
+      var scale = Math.min((pageWidth - 2*margin) / img.getWidth(), (pageHeight - 2*margin) / img.getHeight());
+      img.setWidth(img.getWidth() * scale);
+      img.setHeight(img.getHeight() * scale);
+      img.setLeft((pageWidth - img.getWidth()) / 2).setTop((pageHeight - img.getHeight()) / 2);
+    }
+  }
+  return 'Slides created: ' + slidesInput.length;
 }
 
 

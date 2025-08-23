@@ -68,7 +68,7 @@
             }).withFailureHandler((err) => {
               setStatus('Apps Script error: ' + err);
               setLoading(false);
-            }).createSlides(data.slides);
+            }).createSlides(data);
           } catch (e) {
             setStatus('Error: ' + (e && e.message ? e.message : String(e)));
             setLoading(false);

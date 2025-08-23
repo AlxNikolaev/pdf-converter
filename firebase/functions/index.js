@@ -2,7 +2,7 @@ const { onRequest } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const logger = require('firebase-functions/logger');
 require('dotenv').config();
-const { extractTextFromPdf } = require('./src/pdf');
+const { extractTextFromPdf, extractFirstImagePerPage } = require('./src/pdf');
 const { buildSystemPrompt, buildUserPrompt, slidesSchema } = require('./src/prompts');
 const { createSlidesResponse, parseSlidesFromResponse } = require('./src/openai');
 const { svgToPngBase64 } = require('./src/images');
@@ -30,7 +30,10 @@ exports.convertPdfToSlides = onRequest({ region: 'us-central1', cors: false, sec
     }
 
     const pdfBuffer = Buffer.from(pdfBase64, 'base64');
-    const textRaw = await extractTextFromPdf(pdfBuffer);
+    const [textRaw, pageImages] = await Promise.all([
+      extractTextFromPdf(pdfBuffer),
+      extractFirstImagePerPage(pdfBuffer),
+    ]);
     const text = (textRaw || '').replace(/\s+/g, ' ').trim().slice(0, 24000);
 
     const system = buildSystemPrompt();
@@ -67,7 +70,7 @@ exports.convertPdfToSlides = onRequest({ region: 'us-central1', cors: false, sec
       if (resultSlides.length >= 12) break;
     }
 
-    return res.status(200).json({ slides: resultSlides });
+    return res.status(200).json({ slides: resultSlides, pageImages });
   } catch (err) {
     logger.error('Unhandled error', err);
     return res.status(500).json({ error: 'Internal error' });
