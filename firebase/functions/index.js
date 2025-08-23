@@ -67,13 +67,49 @@ exports.convertPdfToSlides = onRequest({ region: 'us-central1', cors: false, sec
 
     const { default: OpenAI } = await import('openai');
     const openai = new OpenAI({ apiKey: OPENAI_API_KEY.value() || process.env.OPENAI_API_KEY });
+    const slidesSchema = {
+      type: 'object',
+      additionalProperties: false,
+      required: ['slides'],
+      properties: {
+        slides: {
+          type: 'array',
+          minItems: 5,
+          maxItems: 12,
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['title', 'bullets'],
+            properties: {
+              title: { type: 'string', minLength: 1, maxLength: 120 },
+              bullets: {
+                type: 'array',
+                minItems: 3,
+                maxItems: 5,
+                items: { type: 'string', minLength: 1, maxLength: 240 }
+              },
+              image_svg: { anyOf: [ { type: 'string' }, { type: 'null' } ] }
+            }
+          }
+        }
+      }
+    };
     const response = await openai.responses.create({
       model: 'gpt-4o-mini',
       input: [
         { role: 'system', content: system },
         { role: 'user', content: user }
       ],
-      text: { format: 'json' }
+      text: {
+        format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'SlidesSpec',
+            schema: slidesSchema,
+            strict: true
+          }
+        }
+      }
     });
 
     const jsonText = response.output_text || (response.output && response.output[0] && response.output[0].content[0].text) || '';
