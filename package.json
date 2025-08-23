@@ -2,15 +2,13 @@
   "name": "slides-addon-pdf-to-slides",
   "private": true,
   "scripts": {
-    "clasp:login": "npx clasp login --no-localhost",
-    "clasp:create": "npx clasp create --type standalone --title 'PDF → Slides Add-on'",
-    "clasp:push": "npx clasp push",
-    "clasp:pull": "npx clasp pull",
-    "clasp:open": "npx clasp open",
-    "clasp:deploy": "npx clasp deploy --description 'Deploy'",
-    "clasp:version": "npx clasp version 'Update'"
+    "clasp:push": "clasp push",
+    "clasp:pull": "clasp pull",
+    "clasp:open": "clasp open",
+    "clasp:deploy": "clasp deploy --description 'Deploy'",
+    "clasp:version": "clasp version 'Update'"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "clasp": "^1.0.0"
+  }
 }
-
-
