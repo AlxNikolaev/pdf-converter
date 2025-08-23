@@ -103,11 +103,9 @@ exports.convertPdfToSlides = onRequest({ region: 'us-central1', cors: false, sec
       text: {
         format: {
           type: 'json_schema',
-          json_schema: {
-            name: 'SlidesSpec',
-            schema: slidesSchema,
-            strict: true
-          }
+          name: 'SlidesSpec',
+          schema: slidesSchema,
+          strict: true
         }
       }
     });
