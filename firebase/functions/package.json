@@ -1,6 +1,5 @@
 {
   "name": "pdf-to-slides-functions",
-  "type": "module",
   "engines": { "node": "20" },
   "main": "index.js",
   "dependencies": {

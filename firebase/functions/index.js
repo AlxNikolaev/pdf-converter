@@ -1,13 +1,8 @@
-import { onRequest } from 'firebase-functions/v2/https';
-import { defineSecret } from 'firebase-functions/params';
-import * as logger from 'firebase-functions/logger';
-import dotenv from 'dotenv';
-import sharp from 'sharp';
-import OpenAI from 'openai';
-
-const pdf = require('pdf-parse')
-
-dotenv.config();
+const { onRequest } = require('firebase-functions/v2/https');
+const { defineSecret } = require('firebase-functions/params');
+const logger = require('firebase-functions/logger');
+require('dotenv').config();
+const sharp = require('sharp');
 
 const OPENAI_API_KEY = defineSecret('OPENAI_API_KEY');
 
@@ -17,7 +12,7 @@ function sendCors(res) {
   res.set('Access-Control-Allow-Headers', 'Content-Type');
 }
 
-export const convertPdfToSlides = onRequest({ region: 'us-central1', cors: false, secrets: [OPENAI_API_KEY] }, async (req, res) => {
+exports.convertPdfToSlides = onRequest({ region: 'us-central1', cors: false, secrets: [OPENAI_API_KEY] }, async (req, res) => {
   sendCors(res);
   if (req.method === 'OPTIONS') {
     return res.status(204).send('');
@@ -31,6 +26,7 @@ export const convertPdfToSlides = onRequest({ region: 'us-central1', cors: false
       return res.status(400).json({ error: 'pdfBase64 is required' });
     }
 
+    const { default: pdf } = await import('pdf-parse');
     const pdfBuffer = Buffer.from(pdfBase64, 'base64');
     const parsed = await pdf(pdfBuffer);
     const textRaw = (parsed && parsed.text) ? parsed.text : '';
@@ -57,6 +53,7 @@ export const convertPdfToSlides = onRequest({ region: 'us-central1', cors: false
 
     const user = `Source text (may be truncated):\n\n${text}`;
 
+    const { default: OpenAI } = await import('openai');
     const openai = new OpenAI({ apiKey: OPENAI_API_KEY.value() || process.env.OPENAI_API_KEY });
     const response = await openai.responses.create({
       model: 'gpt-4o-mini',
