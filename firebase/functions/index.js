@@ -5,6 +5,8 @@ import dotenv from 'dotenv';
 import sharp from 'sharp';
 import OpenAI from 'openai';
 
+const pdf = require('pdf-parse')
+
 dotenv.config();
 
 const OPENAI_API_KEY = defineSecret('OPENAI_API_KEY');
@@ -29,31 +31,29 @@ export const convertPdfToSlides = onRequest({ region: 'us-central1', cors: false
       return res.status(400).json({ error: 'pdfBase64 is required' });
     }
 
-    // Lazy import to avoid module init side-effects during deploy analysis
-    const { default: pdf } = await import('pdf-parse');
     const pdfBuffer = Buffer.from(pdfBase64, 'base64');
     const parsed = await pdf(pdfBuffer);
     const textRaw = (parsed && parsed.text) ? parsed.text : '';
     const text = (textRaw || '').replace(/\s+/g, ' ').trim().slice(0, 24000);
 
     const system = `You are an assistant that converts document text into a clear set of presentation slides.
-Return strict JSON with the following schema:
-{
-  "slides": [
-    {
-      "title": string,
-      "bullets": string[],
-      "image_svg": string | null
-    }
-  ]
-}
-Rules:
-- 5–10 slides
-- Each slide: 3–5 concise bullets
-- Titles are short and informative
-- If helpful, include a simple monochrome SVG illustration (no external refs, inline <svg> only, 800x450)
-- If not helpful, use null for image_svg
-- Do not include markdown. Return JSON only.`;
+                    Return strict JSON with the following schema:
+                    {
+                      "slides": [
+                        {
+                          "title": string,
+                          "bullets": string[],
+                          "image_svg": string | null
+                        }
+                      ]
+                    }
+                    Rules:
+                    - 5–10 slides
+                    - Each slide: 3–5 concise bullets
+                    - Titles are short and informative
+                    - If helpful, include a simple monochrome SVG illustration (no external refs, inline <svg> only, 800x450)
+                    - If not helpful, use null for image_svg
+                    - Do not include markdown. Return JSON only.`;
 
     const user = `Source text (may be truncated):\n\n${text}`;
 
