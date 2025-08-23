@@ -33,7 +33,6 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: $HOME/service-account.json
         run: |
-          firebase login
           firebase use ${{ secrets.FIREBASE_PROJECT_ID }}
 
       - name: Login to clasp with service account
