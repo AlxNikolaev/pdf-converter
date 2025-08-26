@@ -4,7 +4,7 @@ const logger = require('firebase-functions/logger');
 require('dotenv').config();
 const { extractTextFromPdf, extractFirstImagePerPage } = require('./src/pdf');
 const { buildSystemPrompt, buildUserPrompt, slidesSchema } = require('./src/prompts');
-const { createSlidesResponse, parseSlidesFromResponse } = require('./src/openai');
+const { createSlidesResponse, parseSlidesFromResponse, createTranscription } = require('./src/openai');
 const { svgToPngBase64 } = require('./src/images');
 
 const OPENAI_API_KEY = defineSecret('OPENAI_API_KEY');
@@ -24,23 +24,18 @@ exports.convertPdfToSlides = onRequest({ region: 'us-central1', cors: false, sec
     if (req.method !== 'POST') {
       return res.status(405).json({ error: 'Method not allowed' });
     }
-    const { pdfBase64 } = req.body || {};
-    if (!pdfBase64) {
-      return res.status(400).json({ error: 'pdfBase64 is required' });
+    const { audioBase64, audioMime } = req.body || {};
+    if (!audioBase64) {
+      return res.status(400).json({ error: 'audioBase64 is required' });
     }
 
-    const pdfBuffer = Buffer.from(pdfBase64, 'base64');
-    const [textRaw, pageImages] = await Promise.all([
-      extractTextFromPdf(pdfBuffer),
-      extractFirstImagePerPage(pdfBuffer),
-    ]);
-    const text = (textRaw || '').replace(/\s+/g, ' ').trim().slice(0, 24000);
-
     const system = buildSystemPrompt();
-    const user = buildUserPrompt(text);
 
     const { default: OpenAI } = await import('openai');
     const openai = new OpenAI({ apiKey: OPENAI_API_KEY.value() || process.env.OPENAI_API_KEY });
+    const transcriptionText = await createTranscription(openai, { audioBase64, audioMime });
+    const text = (transcriptionText || '').replace(/\s+/g, ' ').trim().slice(0, 24000);
+    const user = buildUserPrompt(text);
     const response = await createSlidesResponse(openai, { system, user, schema: slidesSchema });
 
     let draft;
@@ -70,7 +65,7 @@ exports.convertPdfToSlides = onRequest({ region: 'us-central1', cors: false, sec
       if (resultSlides.length >= 12) break;
     }
 
-    return res.status(200).json({ slides: resultSlides, pageImages });
+    return res.status(200).json({ slides: resultSlides });
   } catch (err) {
     logger.error('Unhandled error', err);
     return res.status(500).json({ error: 'Internal error' });

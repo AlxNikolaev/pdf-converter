@@ -10,5 +10,9 @@
   },
   "devDependencies": {
     "clasp": "^1.0.0"
+  },
+  "dependencies": {
+    "youtube-transcript": "^1.2.1",
+    "ytdl-core": "^4.11.5"
   }
 }

@@ -38,9 +38,9 @@
           reader.readAsDataURL(file);
         });
       }
-
       function App() {
         const [file, setFile] = useState(null);
+        const [videoLink, setVideoLink] = useState(null)
         const [loading, setLoading] = useState(false);
         const [status, setStatus] = useState('');
 
@@ -48,14 +48,14 @@
           if (!file) return;
           try {
             setLoading(true);
-            setStatus('Reading PDF...');
+            setStatus('Reading audio...');
             const base64 = await readFileAsBase64(file);
 
             setStatus('Uploading to backend...');
             const res = await fetch(FUNCTION_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ pdfBase64: base64 })
+              body: JSON.stringify({ audioBase64: base64, audioMime: file.type || 'audio/mpeg' })
             });
             if (!res.ok) throw new Error('Backend error: ' + res.status);
             const data = await res.json();
@@ -77,20 +77,20 @@
 
         return (
           <div className="container">
-            <h2>PDF → Slides</h2>
+            <h2>Audio → Slides</h2>
             <div className="card">
               <div className="row">
                 <input
                   type="file"
-                  accept="application/pdf"
+                  accept="audio/*"
                   onChange={(e) => setFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
                 />
-                <button disabled={!file || loading} onClick={handleUpload}>Convert & Insert</button>
+                <button disabled={!file || loading} onClick={handleUpload}>Transcribe & Insert</button>
                 {loading && <progress />}
                 <div className="muted">{status}</div>
               </div>
             </div>
-            <div className="muted">Uses Firebase + OpenAI gpt-4o-mini</div>
+            <div className="muted">Uses Firebase + OpenAI whisper-1 + gpt-4o-mini</div>
           </div>
         );
       }

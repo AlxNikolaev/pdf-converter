@@ -16,14 +16,33 @@ async function createSlidesResponse(openai, { system, user, schema }) {
 	});
 }
 
+async function createTranscription(openai, { audioBase64, audioMime }) {
+	if (!audioBase64) throw new Error('audioBase64 is required');
+	const buffer = Buffer.from(audioBase64, 'base64');
+	const fileLike = {
+		name: `audio.${(audioMime || 'audio/mpeg').split('/')[1] || 'mp3'}`,
+		type: audioMime || 'audio/mpeg',
+		arrayBuffer: async () => buffer,
+	};
+	const result = await openai.audio.transcriptions.create({
+		model: 'whisper-1',
+		file: fileLike,
+		response_format: 'verbose_json',
+		timestamp_granularities: ['word'],
+	});
+	// result.text is present in verbose_json
+	return result && (result.text || '');
+}
+
 function parseSlidesFromResponse(response) {
-	const text = response.output_text
+	const text = response.text
+		||	response.output_text
 		|| (response.output && response.output[0] && response.output[0].content && response.output[0].content[0] && response.output[0].content[0].text)
 		|| '';
 	const data = JSON.parse(text);
 	return Array.isArray(data.slides) ? data.slides : [];
 }
 
-module.exports = { createSlidesResponse, parseSlidesFromResponse };
+module.exports = { createSlidesResponse, parseSlidesFromResponse, createTranscription };
 
 
