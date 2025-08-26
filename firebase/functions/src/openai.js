@@ -32,11 +32,33 @@ async function createTranscription(openai, { audioBase64, audioMime }) {
 }
 
 function parseSlidesFromResponse(response) {
-	const text = response.text
-		||	response.output_text
-		|| (response.output && response.output[0] && response.output[0].content && response.output[0].content[0] && response.output[0].content[0].text)
-		|| '';
-	const data = JSON.parse(text);
+	function tryParse(s) {
+		if (typeof s !== 'string') return null;
+		const cleaned = s.trim()
+			.replace(/^```json\n?/i, '')
+			.replace(/\n?```$/i, '');
+		try { return JSON.parse(cleaned); } catch { return null; }
+	}
+
+	let data = tryParse(response && response.output_text);
+	if (!data && response && typeof response.text === 'string') {
+		data = tryParse(response.text);
+	}
+	if (!data && Array.isArray(response && response.output)) {
+		const parts = [];
+		for (const item of response.output) {
+			if (Array.isArray(item.content)) {
+				for (const c of item.content) {
+					if (typeof c.text === 'string') parts.push(c.text);
+				}
+			}
+		}
+		data = tryParse(parts.join('\n'));
+	}
+	if (!data && response && typeof response === 'object' && Array.isArray(response.slides)) {
+		data = response;
+	}
+	if (!data) throw new Error('Model returned non-JSON output');
 	return Array.isArray(data.slides) ? data.slides : [];
 }
 
