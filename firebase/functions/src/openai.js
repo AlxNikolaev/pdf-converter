@@ -19,14 +19,11 @@ async function createSlidesResponse(openai, { system, user, schema }) {
 async function createTranscription(openai, { audioBase64, audioMime }) {
 	if (!audioBase64) throw new Error('audioBase64 is required');
 	const buffer = Buffer.from(audioBase64, 'base64');
-	const fileLike = {
-		name: `audio.${(audioMime || 'audio/mpeg').split('/')[1] || 'mp3'}`,
-		type: audioMime || 'audio/mpeg',
-		arrayBuffer: async () => buffer,
-	};
+	const { toFile } = await import('openai/uploads');
+	const file = await toFile(buffer, `audio.${(audioMime || 'audio/mpeg').split('/')[1] || 'mp3'}`, { type: audioMime || 'audio/mpeg' });
 	const result = await openai.audio.transcriptions.create({
 		model: 'whisper-1',
-		file: fileLike,
+		file,
 		response_format: 'verbose_json',
 		timestamp_granularities: ['word'],
 	});
